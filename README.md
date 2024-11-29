@@ -1,3 +1,3 @@
-##PokeBall Team
+#PokeBall Team
 
 Fatima  --  Valentin  --  William  
