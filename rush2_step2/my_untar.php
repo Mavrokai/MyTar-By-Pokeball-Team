@@ -1,5 +1,7 @@
 <?php
 
+$fichier_tar = $argv[1];
+
 // Fonction pour lire un en-tête TAR et extraire les métadonnées
 function analyser_entete_tar($entete) {
     return [
@@ -145,11 +147,4 @@ function extraire_tar($fichier_tar) {
     echo "Extraction terminée.\n";
 }
 
-// Vérification des arguments en ligne de commande
-if ($argc < 2) {
-    fwrite(STDERR, "Erreur : Vous devez spécifier un fichier TAR à extraire.\n");
-    exit(1);
-}
-
-$fichier_tar = $argv[1];
 extraire_tar($fichier_tar);
