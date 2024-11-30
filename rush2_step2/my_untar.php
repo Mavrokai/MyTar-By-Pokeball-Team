@@ -18,45 +18,38 @@ function analyser_entete_tar($entete) {
 // Fonction pour supprimer un fichier ou un dossier existant
 function supprimer_existant($nom_fichier) {
     if (is_file($nom_fichier)) {
-        unlink($nom_fichier);  // Supprimer le fichier
+        unlink($nom_fichier);
     } elseif (is_dir($nom_fichier)) {
-        rmdir($nom_fichier);  // Supprimer le dossier vide
+        rmdir($nom_fichier);
     }
 }
 
 // Fonction pour extraire un fichier à partir des données d'une archive
-function extraire_fichier($nom_fichier, $contenu, &$choix_ecrasement) {
-    // Si le fichier ou dossier existe déjà, demander à l'utilisateur
+function extraire_fichier($nom_fichier, $contenu, &$choix_ecrasement_global) {
+    // Si le fichier ou dossier existe déjà
     if (file_exists($nom_fichier)) {
-        // Réinitialiser le choix d'écrasement à chaque fichier
-        $choix_ecrasement = null;
+        $choix = $choix_ecrasement_global;
 
-        // Demander à l'utilisateur comment gérer les conflits pour ce fichier
-        $choix_ecrasement = demander_resolution_conflit($nom_fichier);
+        if ($choix_ecrasement_global === null) {
+            // Si aucun choix global, demander à l'utilisateur
+            $choix = demander_resolution_conflit($nom_fichier);
 
-        switch ($choix_ecrasement) {
-            case 1:
-                // Écraser : supprimer l'existant avant d'extraire
-                supprimer_existant($nom_fichier);
-                break;
-            case 2:
-                // Ne pas écraser
-                echo "Ignoré : $nom_fichier\n";
-                return; // Ne pas extraire
-            case 3:
-                // Écraser pour tous : appliquer pour tous les prochains fichiers
-                $choix_ecrasement = 1; // Forcer écrasement pour tous les prochains fichiers
-                supprimer_existant($nom_fichier);
-                break;
-            case 4:
-                // Ne pas écraser pour tous : appliquer pour tous les prochains fichiers
-                $choix_ecrasement = 2; // Forcer non-écrasement pour tous les prochains fichiers
-                echo "Ignoré : $nom_fichier\n";
-                return; // Ne pas extraire
-            case 5:
-                // Arrêter et quitter
+            if ($choix === 3) {
+                $choix_ecrasement_global = 1; // Appliquer "Écraser tout" globalement
+            } elseif ($choix === 4) {
+                $choix_ecrasement_global = 2; // Appliquer "Ne pas écraser tout" globalement
+            } elseif ($choix === 5) {
                 echo "Abandon.\n";
                 exit(0);
+            }
+        }
+
+        // Gérer selon le choix global ou individuel
+        if ($choix_ecrasement_global === 1 || $choix === 1) {
+            supprimer_existant($nom_fichier); // Écraser
+        } elseif ($choix_ecrasement_global === 2 || $choix === 2) {
+            echo "Ignoré : $nom_fichier\n";
+            return; // Ne pas extraire
         }
     }
 
@@ -71,7 +64,7 @@ function extraire_fichier($nom_fichier, $contenu, &$choix_ecrasement) {
     echo "Extrait : $nom_fichier\n";
 }
 
-// Fonction pour gérer la résolution des conflits (demander à l'utilisateur)
+// Fonction pour demander la résolution des conflits
 function demander_resolution_conflit($nom_fichier) {
     echo "Le fichier ou dossier '$nom_fichier' existe déjà. Choisissez une option :\n";
     echo "1. Écraser\n";
@@ -82,13 +75,10 @@ function demander_resolution_conflit($nom_fichier) {
 
     // Lire la réponse de l'utilisateur
     $choix = trim(fgets(STDIN));
-
-    // Vérifier que l'utilisateur a entré une option valide
     while (!in_array($choix, [1, 2, 3, 4, 5])) {
         echo "Choix invalide. Veuillez entrer une option valide (1-5) :\n";
         $choix = trim(fgets(STDIN));
     }
-
     return (int)$choix;
 }
 
@@ -105,8 +95,8 @@ function extraire_tar($fichier_tar) {
         exit(1);
     }
 
-    // Initialisation du choix d'écrasement global
-    $choix_ecrasement = null;
+    // Initialisation du choix d'écrasement global (null = pas encore défini)
+    $choix_ecrasement_global = null;
 
     while (!feof($handle)) {
         // Lire l'en-tête (512 octets)
@@ -122,15 +112,11 @@ function extraire_tar($fichier_tar) {
         $taille = $meta['taille'];
         $typeflag = $meta['typeflag'];
 
-        // Si c'est un fichier
-        if ($typeflag === '0' || $typeflag === '') {
-            // Lire le contenu du fichier
+        if ($typeflag === '0' || $typeflag === '') { // Si c'est un fichier
             $contenu = fread($handle, $taille);
+            extraire_fichier($nom_fichier, $contenu, $choix_ecrasement_global);
 
-            // Extraire le fichier avec gestion des conflits
-            extraire_fichier($nom_fichier, $contenu, $choix_ecrasement);
-
-            // Sauter les octets de padding (si nécessaire)
+            // Sauter les octets de padding
             $padding = 512 - ($taille % 512);
             if ($padding < 512) {
                 fread($handle, $padding);
@@ -145,6 +131,12 @@ function extraire_tar($fichier_tar) {
 
     fclose($handle);
     echo "Extraction terminée.\n";
+}
+
+// Lancer l'extraction
+if ($argc < 2) {
+    fwrite(STDERR, "Erreur : Vous devez spécifier un fichier TAR à extraire.\n");
+    exit(1);
 }
 
 extraire_tar($fichier_tar);
