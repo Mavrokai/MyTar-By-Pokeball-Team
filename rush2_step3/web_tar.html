@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer une archive TAR</title>
+    <link rel="stylesheet" href="./Fatima.css">
+</head>
+
+<body>
+    <div id="form-container">
+        <h1>Créer une archive TAR</h1>
+
+        <!-- Formulaire principal -->
+
+        <form id="archive-form" action="./generate_archive.php" method="post" enctype="multipart/form-data">
+            <label for="archive-name">Nom de l'archive :</label>
+            <input type="text" id="archive-name" name="archive_name" required placeholder="Nom de l'archive" />
+
+            <div class="drop-zone" id="drop-zone">
+                Ajouter un fichier
+                <input type="file" id="file-input" name="files[]" multiple hidden />
+            </div>
+
+            <label>Fichiers ajoutés :</label>
+            <ul class="file-list" id="file-list"></ul>
+
+            <div class="button-container">
+                <button type="button" id="generate-button">Générer un fichier tar</button>
+                <button type="submit" id="download-button">Télécharger l'archive</button>
+            </div>
+
+            <div id="status-message">L'archive est prête à être téléchargée !</div>
+        </form>
+    </div>
+    <script src="./Gestion_files.js"></script>
+</body>
+
+</html>
