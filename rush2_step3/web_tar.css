@@ -13,7 +13,7 @@ label {
     font-weight: bold;
 }
 
-#form-container{
+#form-container {
     width: 100%;
     max-width: 800px;
     height: auto;
@@ -31,7 +31,9 @@ label {
     border-radius: 4px;
 }
 
-#archive-name, .drop-zone, .file-list {
+#archive-name,
+.drop-zone,
+.file-list {
     width: 100%;
     margin-bottom: 20px;
     padding: 15px;
@@ -86,6 +88,7 @@ button {
     cursor: pointer;
     font-size: 16px;
 }
+
 #download-button {
     display: none;
 }
